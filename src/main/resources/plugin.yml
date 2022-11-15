@@ -1,0 +1,10 @@
+name: TimingSystemCustomBoats
+main: net.boatlabs.timing.system.custom.boats.TimingSystemCustomBoats
+version: ${project.version}
+authors: [Markus Hellquist (Makkuusen)]
+depend: [TimingSystem]
+api-version: 1.19
+permissions:
+  boat.admin:
+    description: Player can admin medals
+    default: op

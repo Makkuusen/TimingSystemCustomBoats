@@ -10,22 +10,33 @@ import co.aikar.idb.DB;
 import co.aikar.idb.DbRow;
 import me.makkuusen.timing.system.TimingSystem;
 import me.makkuusen.timing.system.track.Track;
+import net.boatlabs.timing.system.custom.boats.types.AdamsMatrix;
+import net.boatlabs.timing.system.custom.boats.types.BasicOrange;
+import net.boatlabs.timing.system.custom.boats.types.MazdaRX7;
+import net.boatlabs.timing.system.custom.boats.types.RallySubaru;
+import net.boatlabs.timing.system.custom.boats.types.RenosLegacy;
 import net.boatlabs.timing.system.custom.boats.types.TechnosVolvo;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Boat;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class TimingSystemCustomBoats extends JavaPlugin {
 
-    public static HashMap<UUID, BoatType> playerBoats = new HashMap<>();
+    private static HashMap<UUID, PlayerBoat> playerBoats = new HashMap<>();
     public static HashMap<UUID, CustomBoat> boats = new HashMap<>();
+    public static Set<UUID> active = new HashSet<>();
 
     public void onEnable() {
         this.getLogger().info("TimingSystemMedals loaded");
@@ -60,6 +71,10 @@ public class TimingSystemCustomBoats extends JavaPlugin {
                     "  `boat` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n" +
                     "  PRIMARY KEY (`id`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+            DB.executeUpdate("CREATE TABLE IF NOT EXISTS `ts_boats_active` (\n" +
+                    "  `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',\n" +
+                    "  PRIMARY KEY (`uuid`)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
             return true;
         } catch (SQLException exception){
             this.getLogger().warning("Failed to create database tables, disabling plugin.");
@@ -74,7 +89,14 @@ public class TimingSystemCustomBoats extends JavaPlugin {
             for (DbRow row : result) {
                 UUID uuid = UUID.fromString(row.getString("uuid"));
                 BoatType type = row.getString("boat") == null ? BoatType.TechnosVolvo : BoatType.valueOf(row.getString("boat"));
-                TimingSystemCustomBoats.playerBoats.put(uuid, type);
+                var playerBoat = new PlayerBoat(type, uuid);
+                TimingSystemCustomBoats.playerBoats.put(uuid, playerBoat);
+            }
+
+            result = DB.getResults("SELECT * FROM `ts_boats_active`");
+            for (DbRow row : result) {
+                UUID uuid = UUID.fromString(row.getString("uuid"));
+                active.add(uuid);
             }
             return true;
         } catch (SQLException exception){
@@ -109,5 +131,74 @@ public class TimingSystemCustomBoats extends JavaPlugin {
                 throw new InvalidCommandArgument(MessageKeys.INVALID_SYNTAX);
             }
         };
+    }
+
+    public static @Nullable PlayerBoat getPlayerBoat(UUID uuid){
+        var playerBoat = playerBoats.get(uuid);
+        return playerBoat;
+    }
+
+    public static void setPlayerBoat(UUID uuid, BoatType boatType) {
+        PlayerBoat playerBoat;
+        if (playerBoats.containsKey(uuid)) {
+            playerBoat = playerBoats.get(uuid);
+            playerBoat.setBoatType(boatType);
+        } else {
+            playerBoat = new PlayerBoat(boatType, uuid);
+        }
+        playerBoats.put(uuid, playerBoat);
+    }
+
+    public static boolean removePlayerBoat(UUID uuid) {
+        if (playerBoats.containsKey(uuid)) {
+            playerBoats.remove(uuid);
+            DB.executeUpdateAsync("DELETE FROM `ts_boats` WHERE `uuid` = '" + uuid + "';");
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean hasPlayerBoat(UUID uuid) {
+        return playerBoats.containsKey(uuid);
+    }
+
+    public static boolean isActive(UUID uuid) {
+        return active.contains(uuid);
+    }
+
+    public static void inActivate(UUID uuid) {
+        active.remove(uuid);
+        DB.executeUpdateAsync("DELETE FROM `ts_boats_active` WHERE `uuid` = '" + uuid + "';");
+    }
+
+    public static void activate(UUID uuid) {
+        if (active.contains(uuid)) {
+            return;
+        }
+        active.add(uuid);
+        DB.executeUpdateAsync("INSERT INTO `ts_boats_active` (`uuid`) VALUES('" + uuid +  "');");
+    }
+
+    public static CustomBoat createBoat(BoatType boatType, Player player, Location location){
+        switch (boatType) {
+            case MazdaRX7 -> {
+                return new MazdaRX7(player, location);
+            }
+            case BasicOrange -> {
+                return new BasicOrange(player, location);
+            }
+            case AdamsMatrix -> {
+                return new AdamsMatrix(player, location);
+            }
+            case RenosLegacy -> {
+                return new RenosLegacy(player, location);
+            }
+            case RallySubaru -> {
+                return new RallySubaru(player, location);
+            }
+            default -> {
+                return new TechnosVolvo(player, location);
+            }
+        }
     }
 }

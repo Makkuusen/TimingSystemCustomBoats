@@ -12,14 +12,19 @@ import me.makkuusen.timing.system.TimingSystem;
 import me.makkuusen.timing.system.track.Track;
 import net.boatlabs.timing.system.custom.boats.types.AdamsMatrix;
 import net.boatlabs.timing.system.custom.boats.types.BasicOrange;
+import net.boatlabs.timing.system.custom.boats.types.DodgeRam;
 import net.boatlabs.timing.system.custom.boats.types.MazdaRX7;
+import net.boatlabs.timing.system.custom.boats.types.MazdaRX7FC3S;
 import net.boatlabs.timing.system.custom.boats.types.RallySubaru;
 import net.boatlabs.timing.system.custom.boats.types.RenosLegacy;
 import net.boatlabs.timing.system.custom.boats.types.TechnosVolvo;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +68,10 @@ public class TimingSystemCustomBoats extends JavaPlugin {
         synchronize();
     }
 
+    public void onDisable() {
+        DB.close();
+    }
+
     public boolean createTables() {
         try {
             DB.executeUpdate("CREATE TABLE IF NOT EXISTS `ts_boats` (\n" +
@@ -89,7 +98,7 @@ public class TimingSystemCustomBoats extends JavaPlugin {
             for (DbRow row : result) {
                 UUID uuid = UUID.fromString(row.getString("uuid"));
                 BoatType type = row.getString("boat") == null ? BoatType.TechnosVolvo : BoatType.valueOf(row.getString("boat"));
-                var playerBoat = new PlayerBoat(type, uuid);
+                var playerBoat = new PlayerBoat(type, uuid, false);
                 TimingSystemCustomBoats.playerBoats.put(uuid, playerBoat);
             }
 
@@ -144,7 +153,7 @@ public class TimingSystemCustomBoats extends JavaPlugin {
             playerBoat = playerBoats.get(uuid);
             playerBoat.setBoatType(boatType);
         } else {
-            playerBoat = new PlayerBoat(boatType, uuid);
+            playerBoat = new PlayerBoat(boatType, uuid, true);
         }
         playerBoats.put(uuid, playerBoat);
     }
@@ -196,9 +205,55 @@ public class TimingSystemCustomBoats extends JavaPlugin {
             case RallySubaru -> {
                 return new RallySubaru(player, location);
             }
+            case DodgeRam -> {
+                return new DodgeRam(player, location);
+            }
+            case MazdaRX7FC3S -> {
+                return new MazdaRX7FC3S(player, location);
+            }
             default -> {
                 return new TechnosVolvo(player, location);
             }
         }
     }
+
+    public static ItemStack getBoatItem(BoatType boatType, String name){
+        switch (boatType) {
+            case MazdaRX7 -> {
+                return getBoatItem(MazdaRX7.customModelData, name);
+            }
+            case BasicOrange -> {
+                return getBoatItem(BasicOrange.customModelData, name);
+            }
+            case AdamsMatrix -> {
+                return getBoatItem(AdamsMatrix.customModelData, name);
+            }
+            case RenosLegacy -> {
+                return getBoatItem(RenosLegacy.customModelData, name);
+            }
+            case RallySubaru -> {
+                return getBoatItem(RallySubaru.customModelData, name);
+            }
+            case DodgeRam -> {
+                return getBoatItem(DodgeRam.customModelData, name);
+            }
+            case MazdaRX7FC3S -> {
+                return getBoatItem(MazdaRX7FC3S.customModelData, name);
+            }
+            default -> {
+                return getBoatItem(TechnosVolvo.customModelData, name);
+            }
+        }
+    }
+
+    public static ItemStack getBoatItem(int customModelData, String name) {
+        ItemStack i = new ItemStack(Material.STICK, 1);
+        ItemMeta im = i.getItemMeta();
+        im.setDisplayName(name);
+        im.setCustomModelData(customModelData);
+        i.setItemMeta(im);
+        return i;
+    }
+
+
 }

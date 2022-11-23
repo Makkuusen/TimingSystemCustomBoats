@@ -9,10 +9,12 @@ public class PlayerBoat {
     UUID uuid;
     BoatType boatType;
 
-    public PlayerBoat(BoatType boatType, UUID uuid) {
+    public PlayerBoat(BoatType boatType, UUID uuid, boolean isNew) {
         this.uuid = uuid;
         this.boatType = boatType;
-        DB.executeUpdateAsync("INSERT INTO `ts_boats` (`uuid`, `boat`) VALUES('" + uuid +  "', '" + boatType.name() + "');");
+        if (isNew) {
+            DB.executeUpdateAsync("INSERT INTO `ts_boats` (`uuid`, `boat`) VALUES('" + uuid + "', '" + boatType.name() + "');");
+        }
     }
 
     public BoatType getBoatType() {

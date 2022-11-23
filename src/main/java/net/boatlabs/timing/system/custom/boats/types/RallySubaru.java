@@ -5,7 +5,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class RallySubaru extends CustomBoat {
+    public static final int customModelData = 12;
     public RallySubaru(Player player, Location location) {
-        super(player, location, 12);
+        super(player, location, customModelData);
     }
 }

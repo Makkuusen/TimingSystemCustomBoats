@@ -4,9 +4,9 @@ import net.boatlabs.timing.system.custom.boats.CustomBoat;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-public class RenosLegacy extends CustomBoat {
-    public static final int customModelData = 14;
-    public RenosLegacy(Player player, Location location) {
+public class DodgeRam extends CustomBoat {
+    public static final int customModelData = 17;
+    public DodgeRam(Player player, Location location) {
         super(player, location, customModelData);
     }
 }

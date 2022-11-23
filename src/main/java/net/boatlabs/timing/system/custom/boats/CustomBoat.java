@@ -40,10 +40,6 @@ public abstract class CustomBoat {
         boat.remove();
     }
 
-    public ItemStack getBoatItem() {
-        return null;
-    }
-
     private static org.bukkit.entity.Boat spawnCustomBoat(Location location) {
         if (!location.isWorldLoaded()) {
             return null;
@@ -63,7 +59,6 @@ public abstract class CustomBoat {
         i.setItemMeta(im);
         Villager villager = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);
         villager.setInvisible(true);
-        villager.setInvulnerable(true);
         villager.setAI(false);
         villager.setSilent(true);
         villager.getEquipment().setItemInMainHand(i);

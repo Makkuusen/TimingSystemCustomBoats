@@ -27,7 +27,7 @@ public class CustomBoatSettingsGui extends BaseGui {
             }
         }
         for (BoatType bt : BoatType.values()) {
-            setItem(getCustomBoatButton(tPlayer, Material.OAK_BOAT, bt), count);
+            setItem(getCustomBoatButton(tPlayer, bt), count);
             count++;
         }
         setItem(ButtonUtilities.getReturnToSettingsButton(tPlayer), 26);
@@ -52,8 +52,8 @@ public class CustomBoatSettingsGui extends BaseGui {
         return button;
     }
 
-    public GuiButton getCustomBoatButton(TPlayer tPlayer, Material material, BoatType boatType){
-        var button = new GuiButton(new ItemBuilder(material).setName("§e" + boatType.name()).build());
+    public GuiButton getCustomBoatButton(TPlayer tPlayer, BoatType boatType){
+        var button = new GuiButton(TimingSystemCustomBoats.getBoatItem(boatType,"§e" + boatType.name()));
         button.setAction(()-> {
             TimingSystemCustomBoats.setPlayerBoat(tPlayer.getPlayer().getUniqueId(), boatType);
             new SettingsGui(tPlayer).show(tPlayer.getPlayer());

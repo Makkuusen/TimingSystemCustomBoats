@@ -6,5 +6,7 @@ public enum BoatType {
     BasicOrange,
     RallySubaru,
     AdamsMatrix,
-    RenosLegacy
+    RenosLegacy,
+    MazdaRX7FC3S,
+    DodgeRam
 }

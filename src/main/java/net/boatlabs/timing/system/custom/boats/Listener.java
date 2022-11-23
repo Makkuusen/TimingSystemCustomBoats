@@ -2,6 +2,7 @@ package net.boatlabs.timing.system.custom.boats;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.ChatEvent;
+import me.makkuusen.timing.system.ApiUtilities;
 import me.makkuusen.timing.system.ItemBuilder;
 import me.makkuusen.timing.system.TPlayer;
 import me.makkuusen.timing.system.TimingSystem;
@@ -13,21 +14,19 @@ import me.makkuusen.timing.system.gui.BoatSettingsGui;
 import me.makkuusen.timing.system.gui.GuiButton;
 import me.makkuusen.timing.system.gui.SettingsGui;
 import me.makkuusen.timing.system.participant.DriverState;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 
 import java.util.UUID;
 
 public class Listener implements org.bukkit.event.Listener {
+
 
     @EventHandler
     public void onVehicleExit(VehicleExitEvent event) {
@@ -69,6 +68,14 @@ public class Listener implements org.bukkit.event.Listener {
     @EventHandler
     public void onBoatSpawnEvent(BoatSpawnEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
+        var tPlayer = TimingSystemAPI.getTPlayer(event.getPlayer().getUniqueId());
+        if (tPlayer.getBoat() == Boat.Type.OAK && !tPlayer.isChestBoat()) {
+            Boat boat = ApiUtilities.spawnBoat(event.getPlayer().getLocation(), Boat.Type.BIRCH, tPlayer.isChestBoat());
+            boat.addPassenger(event.getPlayer());
+            event.setBoat(boat);
+            return;
+        }
+
         if (!TimingSystemCustomBoats.hasPlayerBoat(uuid)) {
             return;
         }
@@ -102,21 +109,12 @@ public class Listener implements org.bukkit.event.Listener {
             var tPlayer = TimingSystemAPI.getTPlayer(event.getPlayer().getUniqueId());
             var gui = event.getGui();
             var playerBoat = TimingSystemCustomBoats.getPlayerBoat(event.getPlayer().getUniqueId());
-            gui.setItem(getBoatMenuButton(tPlayer, Material.OAK_BOAT, playerBoat.getBoatType()),14);
+            gui.setItem(getBoatMenuButton(tPlayer, playerBoat.getBoatType()),14);
         }
     }
 
-    public GuiButton getCustomBoatButton(TPlayer tPlayer, Material material, BoatType boatType){
-        var button = new GuiButton(new ItemBuilder(material).setName("§e" + boatType.name()).build());
-        button.setAction(()-> {
-            TimingSystemCustomBoats.setPlayerBoat(tPlayer.getPlayer().getUniqueId(), boatType);
-            new SettingsGui(tPlayer).show(tPlayer.getPlayer());
-        });
-        return button;
-    }
-
-    private static GuiButton getBoatMenuButton(TPlayer tPlayer, Material material, BoatType boatType) {
-        var button = new GuiButton(new ItemBuilder(material).setName("§e" + boatType).build());
+    private static GuiButton getBoatMenuButton(TPlayer tPlayer, BoatType boatType) {
+        var button = new GuiButton(TimingSystemCustomBoats.getBoatItem(boatType,"§e" + boatType.name()));
         button.setAction(() -> {
             new BoatSettingsGui(tPlayer).show(tPlayer.getPlayer());
         });
